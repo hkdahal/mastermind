@@ -1,15 +1,9 @@
 import javafx.application.Application;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextBoundsType;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
@@ -28,6 +22,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
     private MastermindModel model;
     private Text statusMessage;
+    private GridPane grid;
+    private Button peekBtn;
 
     @Override
     public void init(){
@@ -37,10 +33,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
         BorderPane border = new BorderPane();
-
-
         Pane text_box = new HBox();
 
         this.statusMessage = new Text("You have " + model.getRemainingGuesses
@@ -52,16 +45,12 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
         border.setTop(text_box);
 
-        GridPane grid = new GridPane();
+        this.grid = new GridPane();
         int gap = 2;
         grid.setVgap(gap);
         grid.setHgap(gap);
-        // add specifying both column and row.
-        // javafx docs talk about 1-based columns and rows but...
 
-        for (int c = 2; c < 6; c++) {
-                grid.add( this.makeRandomButton(), c, 0 );
-        }
+        this.makeSolutionButton();
 
         for ( int r = 1; r < 10; ++r ) {
             grid.add(makePegList(), 0, r);
@@ -72,7 +61,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         }
 
         grid.setGridLinesVisible(false);
-        grid.setPadding(new Insets(50, 40, 50, 50));
+        grid.setPadding(new Insets(40, 40, 50, 50));
 
         border.setCenter(grid);
 
@@ -86,18 +75,31 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
     }
 
+
+    private void makeSolutionButton(){
+        for (int c = 2; c < 6; c++) {
+            Button btn = new Button();
+            btn.setMinSize(40, 40);
+            grid.add(btn, c, 0 );
+        }
+    }
+
+
     private Button makeRandomButton(){
         Button btn = new Button();
         // setting max size causes buttons to fill the cell.
         btn.setMinSize( 40, 40 );
+
+
+
         //btn.setBackground(Color.);
 
-        Random rand = new Random();
-        Background bg = new Background(
-                new BackgroundFill( Color.color(rand.nextDouble(),
-                        rand.nextDouble(), rand.nextDouble()),
-                        new CornerRadii(5), new Insets(0,1,1,0)) );
-        btn.setBackground(bg);
+        /*Random rand = new Random();
+        String randomize_color = colors[rand.nextInt(model.UNIQUE_SYMBOLS)];
+        String bg_color = "-fx-background-color: " + randomize_color;
+
+        btn.setStyle("-fx-background-radius: 5,4,3,5;");
+        btn.setStyle(bg_color);*/
         return btn;
     }
 
@@ -131,7 +133,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         Button resetBtn = new Button("New Game");
         resetBtn.setOnAction(event -> model.reset());
 
-        Button peekBtn = new Button("Peek");
+        this.peekBtn = new Button("Peek");
         peekBtn.setOnAction(event -> model.peek());
 
         Button  guessBtn = new Button("Guess");
@@ -143,14 +145,53 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
 
+
+
+
     @Override
     public void update(Observable o, Object arg) {
         assert o == this.model: "Unexpected subject of observation";
+        displayGame();
+    }
 
-        statusMessage.setText("You have " + model.getRemainingGuesses
-                () + " guesses remaining.");
+    private void displayGame() {
+        displayBoard();
+        displayMessage();
 
     }
+
+    private void displayMessage() {
+        if (this.model.getVictoryStatus()){
+            statusMessage.setText("You won the game!!");
+        } else if (this.model.getRemainingGuesses() == 0){
+            statusMessage.setText("You lost the game!!");
+        } else {
+            statusMessage.setText("You have " + model.getRemainingGuesses
+                    () + " guesses remaining.");
+        }
+    }
+
+    private void displayBoard() {
+        ArrayList<Integer> sol = this.model.getSolution();
+        ArrayList<Character> clues = this.model.getClueData();
+        ArrayList<Integer> guesses = this.model.getGuessData();
+        String[] colors = {"red", "green", "blue", "yellow", "white", "black"};
+        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
+            if (sol.get(i) > 0) {
+                this.peekBtn.setText("(Un) Peek");
+                Button btn = new Button();
+                String bg_color = colors[sol.get(i)-1] + ";";
+                String color_it = "-fx-background-color: " + bg_color;
+                btn.setStyle(color_it);
+                btn.setMinSize(40, 40);
+                grid.add(btn, i+2, 0 );
+            }else{
+                makeSolutionButton();
+                this.peekBtn.setText("Peek");
+            }
+        }
+    }
+
 
 
     /**
