@@ -1,4 +1,6 @@
 import javafx.application.Application;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
@@ -7,10 +9,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.Random;
+import javax.lang.model.type.NullType;
+import java.lang.reflect.Array;
+import java.util.*;
+
 
 /**
  * Author:  Hari Dahal
@@ -24,6 +26,13 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private Text statusMessage;
     private GridPane grid;
     private Button peekBtn;
+    private Button guessBtn;
+    private String[] colors = {"black", "white", "blue", "yellow", "red",
+            "green"};
+    private ArrayList<Integer> fullGuess = new ArrayList<>();
+
+    private ArrayList<Integer> user_gueses = new ArrayList<>(Arrays.asList(0,
+            0,0,0));
 
     @Override
     public void init(){
@@ -45,23 +54,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
         border.setTop(text_box);
 
-        this.grid = new GridPane();
-        int gap = 2;
-        grid.setVgap(gap);
-        grid.setHgap(gap);
-
-        this.makeSolutionButton();
-
-        for ( int r = 1; r < 10; ++r ) {
-            grid.add(makePegList(), 0, r);
-            for ( int c = 2; c < 6; ++c ) {
-
-                grid.add( this.makeRandomButton(), c, r );
-            }
-        }
-
-        grid.setGridLinesVisible(false);
-        grid.setPadding(new Insets(40, 40, 50, 50));
+        this.grid = makeNewGridPane();
 
         border.setCenter(grid);
 
@@ -72,35 +65,67 @@ public class MastermindGraphicalVC extends Application implements Observer{
         primaryStage.setScene(new Scene(border));
         primaryStage.setTitle("Mastermind Game");
         primaryStage.show();
-
     }
 
 
-    private void makeSolutionButton(){
+    private GridPane makeNewGridPane(){
+        GridPane a_grid = new GridPane();
+        int gap = 2;
+        a_grid.setVgap(gap);
+        a_grid.setHgap(gap);
+
+        this.makeSolutionButton(a_grid);
+
+        for ( int r = 1; r < 10; ++r ) {
+            a_grid.add(makePegList(), 0, r);
+            for ( int c = 2; c < 6; ++c ) {
+                Button btn = this.makeRandomButton();
+                if (r==9){
+                    btn.setDisable(false);
+                }
+                a_grid.add(btn, c, r );
+            }
+        }
+
+        a_grid.setGridLinesVisible(false);
+        a_grid.setPadding(new Insets(40, 40, 50, 50));
+
+        return a_grid;
+    }
+
+
+    private void makeSolutionButton(GridPane theGrid){
         for (int c = 2; c < 6; c++) {
-            Button btn = new Button();
-            btn.setMinSize(40, 40);
-            grid.add(btn, c, 0 );
+            theGrid.add(makeRandomButton(), c, 0 );
         }
     }
 
-
     private Button makeRandomButton(){
         Button btn = new Button();
-        // setting max size causes buttons to fill the cell.
         btn.setMinSize( 40, 40 );
-
-
-
-        //btn.setBackground(Color.);
-
-        /*Random rand = new Random();
-        String randomize_color = colors[rand.nextInt(model.UNIQUE_SYMBOLS)];
-        String bg_color = "-fx-background-color: " + randomize_color;
-
-        btn.setStyle("-fx-background-radius: 5,4,3,5;");
-        btn.setStyle(bg_color);*/
+        btn.setId("0");
+        btn.setDisable(true);
+        btn.setOnAction(event -> btnClickedEvent(btn));
         return btn;
+    }
+
+    private void btnClickedEvent(Button btn) {
+
+        int i = Integer.parseInt(btn.getId()) + 1;
+        if (i > 6){
+            i = 1;
+        }
+        String bg_color = colors[i-1] + ";";
+        String color_it = "-fx-background-color: " + bg_color;
+        btn.setStyle(color_it);
+        btn.setId("" + i);
+
+        int index = this.grid.getColumnIndex(btn);
+        user_gueses.set(index-2, i);
+        System.out.println(user_gueses);
+        if (!user_gueses.contains(0)){
+            guessBtn.setDisable(false);
+        }
     }
 
     private Pane makePegList() {
@@ -131,13 +156,18 @@ public class MastermindGraphicalVC extends Application implements Observer{
         //Insets PADDING = new Insets(0, 0, 50, 0);
 
         Button resetBtn = new Button("New Game");
-        resetBtn.setOnAction(event -> model.reset());
+        resetBtn.setOnAction(event -> newGameEvent());
 
         this.peekBtn = new Button("Peek");
-        peekBtn.setOnAction(event -> model.peek());
+        peekBtn.setOnAction(event -> peekEvent());
 
-        Button  guessBtn = new Button("Guess");
-        guessBtn.setOnAction(event -> model.makeGuess());
+        this.guessBtn = new Button("Guess");
+        guessBtn.setDisable(true);
+        guessBtn.setOnAction(event -> guesBtnEvent());
+
+        Button updateBtn = new Button("Update");
+        //updateBtn.setOnAction(event -> this.model.make);
+
 
         pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
         pane.setPadding(new Insets(70, 20, 0, 0));
@@ -145,7 +175,52 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
 
+    private void newGameEvent(){
+        this.model.reset();
+        user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
+        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
+            this.peekBtn.setText("Peek");
+            Button temp_btn = new Button();
+            Node btn = grid.getChildren().get(i); //new Button();
+            btn.setStyle(temp_btn.getStyle());
+        }
+    }
 
+
+
+    private void peekEvent(){
+        this.model.peek();
+        ArrayList<Integer> sol = this.model.getSolution();
+        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
+            if (sol.get(i) > 0) {
+                this.peekBtn.setText("(Un) Peek");
+                Node btn = grid.getChildren().get(i); //new Button();
+                String bg_color = colors[sol.get(i)-1] + ";";
+                String color_it = "-fx-background-color: " + bg_color;
+                btn.setStyle(color_it);
+                btn.setDisable(false);
+            }else{
+                this.peekBtn.setText("Peek");
+                Button temp_btn = new Button();
+                Node btn = grid.getChildren().get(i); //new Button();
+                /*String bg_color = colors[sol.get(i)-1] + ";";
+                String color_it = "-fx-background-color: " + bg_color;*/
+                btn.setStyle(temp_btn.getStyle());
+            }
+        }
+
+    }
+
+
+    private void guesBtnEvent() {
+        this.model.setFullGuessRow(user_gueses);
+        this.model.makeGuess();
+        if (this.model.getVictoryStatus()){
+            peekEvent();
+            peekBtn.setDisable(true);
+            guessBtn.setDisable(true);
+        }
+    }
 
 
     @Override
@@ -155,14 +230,14 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
     private void displayGame() {
-        displayBoard();
+        //displayBoard();
         displayMessage();
 
     }
 
     private void displayMessage() {
         if (this.model.getVictoryStatus()){
-            statusMessage.setText("You won the game!!");
+            statusMessage.setText("You cracked the code!!");
         } else if (this.model.getRemainingGuesses() == 0){
             statusMessage.setText("You lost the game!!");
         } else {
@@ -171,25 +246,12 @@ public class MastermindGraphicalVC extends Application implements Observer{
         }
     }
 
+
     private void displayBoard() {
         ArrayList<Integer> sol = this.model.getSolution();
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
-        String[] colors = {"red", "green", "blue", "yellow", "white", "black"};
-        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
-            if (sol.get(i) > 0) {
-                this.peekBtn.setText("(Un) Peek");
-                Button btn = new Button();
-                String bg_color = colors[sol.get(i)-1] + ";";
-                String color_it = "-fx-background-color: " + bg_color;
-                btn.setStyle(color_it);
-                btn.setMinSize(40, 40);
-                grid.add(btn, i+2, 0 );
-            }else{
-                makeSolutionButton();
-                this.peekBtn.setText("Peek");
-            }
-        }
+
     }
 
 
@@ -200,7 +262,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
      * @param args Command line arguments -- unused
      */
     public static void main(String[] args) {
-        //game.playGame();
         Application.launch(args);
     }
 }
