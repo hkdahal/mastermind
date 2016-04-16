@@ -9,8 +9,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
-import javax.lang.model.type.NullType;
-import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -79,7 +77,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
         for ( int r = 1; r < 10; ++r ) {
             a_grid.add(makePegList(), 0, r);
             for ( int c = 2; c < 6; ++c ) {
-                Button btn = this.makeRandomButton();
+                Button btn = new Button();
+                btn = this.makeRandomButton(btn);
                 if (r==9){
                     btn.setDisable(false);
                 }
@@ -96,12 +95,12 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
     private void makeSolutionButton(GridPane theGrid){
         for (int c = 2; c < 6; c++) {
-            theGrid.add(makeRandomButton(), c, 0 );
+            Button btn = new Button();
+            theGrid.add(makeRandomButton(btn), c, 0 );
         }
     }
 
-    private Button makeRandomButton(){
-        Button btn = new Button();
+    private Button makeRandomButton(Button btn){
         btn.setMinSize( 40, 40 );
         btn.setId("0");
         btn.setDisable(true);
@@ -178,12 +177,15 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private void newGameEvent(){
         this.model.reset();
         user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
-        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
+        for (Node aNode: this.grid.getChildren()){
+            aNode.setId("0");
             this.peekBtn.setText("Peek");
             Button temp_btn = new Button();
-            Node btn = grid.getChildren().get(i); //new Button();
-            btn.setStyle(temp_btn.getStyle());
+            aNode.setStyle(temp_btn.getStyle());
         }
+
+
+
     }
 
 
