@@ -6,6 +6,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
@@ -20,19 +21,24 @@ import java.util.*;
 
 public class MastermindGraphicalVC extends Application implements Observer{
 
-    private MastermindModel model;
-    private Text statusMessage;
-    private GridPane grid;
-    private Button peekBtn;
-    private Button guessBtn;
+
+    // different atrributes to keep track of
+    private MastermindModel model;  // the model
+    private Text statusMessage;     // the status message
+    private GridPane grid;          // the grid (the game)
+    private Button peekBtn;         // the peek button
+    private Button guessBtn;        // the guess button
+    private Stage the_stage;
+
+    // an array of colors
     private String[] colors = {"black", "white", "blue", "yellow", "red",
             "green"};
-    private ArrayList<Integer> fullGuess = new ArrayList<>();
 
+    // initial guesses of user
     private ArrayList<Integer> user_gueses = new ArrayList<>(Arrays.asList(0,
             0,0,0));
 
-    private HBox userInputBar;
+    private HBox userInputBar;  // a HBox bar from which user inputs guesses
 
     @Override
     public void init(){
@@ -42,8 +48,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        BorderPane border = new BorderPane();
-        Pane text_box = new HBox();
+        BorderPane border = new BorderPane();   // root Node
+        Pane text_box = new HBox();             // HBox to store the text
 
         this.statusMessage = new Text("You have " + model.getRemainingGuesses
                 () + " guesses remaining.");
@@ -52,23 +58,34 @@ public class MastermindGraphicalVC extends Application implements Observer{
         text_box.getChildren().add(statusMessage);
         text_box.setPadding(new Insets(10, 0, 0, 10));
 
-        border.setTop(text_box);
+        border.setTop(text_box);        // Text at the top
 
         this.grid = makeNewGridPane();
 
-        border.setCenter(grid);
+        border.setCenter(grid);         // the Grid at the Center
 
+        // the User control buttons (new game, peek, guess) at the Right
         border.setRight(this.makeButtonList());
 
         this.userInputBar = makeUserInputBar();
 
-        border.setBottom(userInputBar);
+        Text info = new Text("  Click below to input guesses.");
+        info.setTextAlignment(TextAlignment.CENTER);
 
-        //border.getChildren().addAll(btn);
+
+        VBox userInput = new VBox();
+        userInput.getChildren().addAll(info, userInputBar);
+        userInput.setPadding(new Insets(0,10,25,100));
+        //userInput.setPadding(new Insets(0,0,10,0));
+        //userInputBar.getChildren().add(info);
+        // user input bar at the bottom
+        border.setBottom(userInput);
+
         primaryStage.setResizable(false);
         primaryStage.setScene(new Scene(border));
         primaryStage.setTitle("Mastermind Game");
         primaryStage.show();
+        this.the_stage = primaryStage;
     }
 
 
@@ -97,7 +114,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         }
 
         a_grid.setGridLinesVisible(false);
-        a_grid.setPadding(new Insets(40, 40, 50, 50));
+        a_grid.setPadding(new Insets(40, 40, 40, 50));
 
         return a_grid;
     }
@@ -176,6 +193,10 @@ public class MastermindGraphicalVC extends Application implements Observer{
         this.guessBtn = new Button("Guess");
         guessBtn.setDisable(true);
         guessBtn.setOnAction(event -> guesBtnEvent());
+
+        //Button exitBtn = new Button("Exit");
+        //exitBtn.setStyle("-fx-background-color: red");
+        //exitBtn.setOnAction(event -> the_stage.close());
 
         pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
         pane.setPadding(new Insets(70, 20, 0, 0));
@@ -272,7 +293,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
             btn.setOnAction(event -> btnClickedEvent(btn));
             the_slide.getChildren().add(btn);
         }
-        the_slide.setPadding(new Insets(0,10,30,100));
+        the_slide.setPadding(new Insets(5,0,0,0));
         return the_slide;
     }
 
@@ -282,16 +303,16 @@ public class MastermindGraphicalVC extends Application implements Observer{
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
 
-        System.out.println("Solution: " + sol);
+        /*System.out.println("Solution: " + sol);
         System.out.println("User_Guesses: " + user_gueses);
         System.out.println("Clues: " + clues);
-        System.out.println("GuessesData: " + guesses);
+        System.out.println("GuessesData: " + guesses);*/
 
 
         int i = 0;
         int j = 0;
-        System.out.println("Size of children: " + this.grid.getChildren().size());
-        System.out.println(this.grid.getChildren());
+        //System.out.println("Size: " + this.grid.getChildren().size());
+        //System.out.println(this.grid.getChildren());
         //for (Node aNode: this.grid.getChildren()){
 
         for (int k = 20; k > 0; k--) {
