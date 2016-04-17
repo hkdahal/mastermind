@@ -5,6 +5,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
@@ -32,6 +34,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private ArrayList<Integer> user_gueses = new ArrayList<>(Arrays.asList(0,
             0,0,0));
 
+    private HBox userInputBar;
+
     @Override
     public void init(){
         this.model = new MastermindModel();
@@ -58,6 +62,10 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
         border.setRight(this.makeButtonList());
 
+        this.userInputBar = makeUserInputBar();
+
+        border.setBottom(userInputBar);
+
         //border.getChildren().addAll(btn);
         primaryStage.setResizable(false);
         primaryStage.setScene(new Scene(border));
@@ -74,14 +82,11 @@ public class MastermindGraphicalVC extends Application implements Observer{
 
         this.makeSolutionButton(a_grid);
 
-        for ( int r = 1; r < 10; ++r ) {
+        for ( int r = 1; r < 11; ++r ) {
             a_grid.add(makePegList(), 0, r);
             for ( int c = 2; c < 6; ++c ) {
                 Button btn = new Button();
                 btn = this.makeRandomButton(btn);
-                if (r==9){
-                    btn.setDisable(false);
-                }
                 a_grid.add(btn, c, r );
             }
         }
@@ -96,6 +101,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private void makeSolutionButton(GridPane theGrid){
         for (int c = 2; c < 6; c++) {
             Button btn = new Button();
+            btn.setId("Solution Button");
             theGrid.add(makeRandomButton(btn), c, 0 );
         }
     }
@@ -103,8 +109,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private Button makeRandomButton(Button btn){
         btn.setMinSize( 40, 40 );
         btn.setId("0");
-        btn.setDisable(true);
-        btn.setOnAction(event -> btnClickedEvent(btn));
+        btn.setDisable(false);
+        btn.setStyle("-fx-background-color: lightgray");
         return btn;
     }
 
@@ -119,9 +125,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
         btn.setStyle(color_it);
         btn.setId("" + i);
 
-        int index = this.grid.getColumnIndex(btn);
-        user_gueses.set(index-2, i);
-        System.out.println(user_gueses);
+        int index = Integer.parseInt(btn.getAccessibleText());
+        user_gueses.set(index, i);
         if (!user_gueses.contains(0)){
             guessBtn.setDisable(false);
         }
@@ -133,10 +138,9 @@ public class MastermindGraphicalVC extends Application implements Observer{
         for (int i = 0; i <2; i++) {
             Pane h_pane = new HBox();
             for (int j = 0; j < 2; j++) {
-                RadioButton rbutton = new RadioButton();
-                //rbutton.setMinHeight(23);
-
-                h_pane.getChildren().add(rbutton);
+                Circle clue_circle = new Circle(10);
+                clue_circle.setFill(Color.LIGHTGRAY);
+                h_pane.getChildren().add(clue_circle);
             }
             pane.getChildren().add(h_pane);
         }
@@ -164,10 +168,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         guessBtn.setDisable(true);
         guessBtn.setOnAction(event -> guesBtnEvent());
 
-        Button updateBtn = new Button("Update");
-        //updateBtn.setOnAction(event -> this.model.make);
-
-
         pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
         pane.setPadding(new Insets(70, 20, 0, 0));
         return pane;
@@ -177,40 +177,35 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private void newGameEvent(){
         this.model.reset();
         user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
+        this.peekBtn.setText("Peek");
+        this.peekBtn.setDisable(false);
         for (Node aNode: this.grid.getChildren()){
-            aNode.setId("0");
-            this.peekBtn.setText("Peek");
-            Button temp_btn = new Button();
-            aNode.setStyle(temp_btn.getStyle());
+            if (aNode instanceof VBox){
+                //System.out.println(((VBox) aNode).getChildren());
+                for (Node h_box: ((VBox) aNode).getChildren()){
+                    if (h_box instanceof HBox){
+                        //System.out.println(((HBox) h_box).getChildren());
+                        for (Node cl_circ: ((HBox) h_box).getChildren()){
+                            if (cl_circ instanceof Circle){
+                                ((Circle) cl_circ).setFill(Color.LIGHTGRAY);
+
+                            }
+                        }
+                    }
+                }
+
+            }else if (aNode instanceof Button){
+                ((Button) aNode).setText("");
+                aNode.setId("0");
+                aNode.setStyle("-fx-background-color: lightgray");
+            }
         }
-
-
-
+        resetUserInputBar();
     }
-
-
 
     private void peekEvent(){
         this.model.peek();
         ArrayList<Integer> sol = this.model.getSolution();
-        for(int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
-            if (sol.get(i) > 0) {
-                this.peekBtn.setText("(Un) Peek");
-                Node btn = grid.getChildren().get(i); //new Button();
-                String bg_color = colors[sol.get(i)-1] + ";";
-                String color_it = "-fx-background-color: " + bg_color;
-                btn.setStyle(color_it);
-                btn.setDisable(false);
-            }else{
-                this.peekBtn.setText("Peek");
-                Button temp_btn = new Button();
-                Node btn = grid.getChildren().get(i); //new Button();
-                /*String bg_color = colors[sol.get(i)-1] + ";";
-                String color_it = "-fx-background-color: " + bg_color;*/
-                btn.setStyle(temp_btn.getStyle());
-            }
-        }
-
     }
 
 
@@ -219,9 +214,21 @@ public class MastermindGraphicalVC extends Application implements Observer{
         this.model.makeGuess();
         if (this.model.getVictoryStatus()){
             peekEvent();
-            peekBtn.setDisable(true);
+            //peekBtn.setDisable(true);
             guessBtn.setDisable(true);
         }
+        resetUserInputBar();
+    }
+
+    private void resetUserInputBar() {
+
+        for (Node btn: this.userInputBar.getChildren()){
+            if (btn instanceof Button){
+                btn.setId("0");
+                btn.setStyle("-fx-background-color: lightgray");
+            }
+        }
+        this.guessBtn.setDisable(true);
     }
 
 
@@ -232,7 +239,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
     private void displayGame() {
-        //displayBoard();
+        displayBoard();
         displayMessage();
 
     }
@@ -241,11 +248,27 @@ public class MastermindGraphicalVC extends Application implements Observer{
         if (this.model.getVictoryStatus()){
             statusMessage.setText("You cracked the code!!");
         } else if (this.model.getRemainingGuesses() == 0){
-            statusMessage.setText("You lost the game!!");
+            statusMessage.setText("You ran out of guesses!!");
         } else {
             statusMessage.setText("You have " + model.getRemainingGuesses
                     () + " guesses remaining.");
         }
+    }
+
+    private HBox makeUserInputBar(){
+        HBox the_slide = new HBox(2);
+        for (int i = 0; i < 4; i++) {
+            Button btn = new Button();
+            btn.setMinSize( 40, 40 );
+            btn.setId("0");
+            btn.setAccessibleText("" + i);
+            btn.setStyle("-fx-background-color: lightgray");
+           // btn.setPadding(new Insets(0,10,30,10));
+            btn.setOnAction(event -> btnClickedEvent(btn));
+            the_slide.getChildren().add(btn);
+        }
+        the_slide.setPadding(new Insets(0,10,30,100));
+        return the_slide;
     }
 
 
@@ -253,6 +276,73 @@ public class MastermindGraphicalVC extends Application implements Observer{
         ArrayList<Integer> sol = this.model.getSolution();
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
+
+        System.out.println("Solution: " + sol);
+        System.out.println("User_Guesses: " + user_gueses);
+        System.out.println("Clues: " + clues);
+        System.out.println("GuessesData: " + guesses);
+
+
+        int i = 0;
+        int j = 0;
+        System.out.println("Size of children: " + this.grid.getChildren().size());
+        //for (Node aNode: this.grid.getChildren()){
+        for (int k = 53; k > 3; k--) {
+            Node aNode = this.grid.getChildren().get(k);
+            if (aNode instanceof Button) {
+                if (!aNode.getId().equals("Solution Button")) {
+                    int guessed_int = guesses.get(i);
+                    //System.out.println(guessed_int);
+
+                    if (guessed_int > 0) {
+                        String the_color = this.colors[guessed_int - 1];
+                        String color_it = "-fx-background-color: " +
+                                the_color + ";";
+                        ((Button) aNode).setText(" " + k);
+                        aNode.setStyle(color_it);
+                    }
+                    i++;
+                }
+            }
+
+            if (aNode instanceof VBox){
+                //System.out.println(((VBox) aNode).getChildren());
+                for (Node h_box: ((VBox) aNode).getChildren()){
+                    if (h_box instanceof HBox){
+                        //System.out.println(((HBox) h_box).getChildren());
+                        for (Node cl_circ: ((HBox) h_box).getChildren()){
+                            if (cl_circ instanceof Circle){
+                                //r_bt.setStyle("-fx-background-color: aqua");
+                                if (clues.get(j).equals('B')){
+                                    ((Circle) cl_circ).setFill(Color.BLACK);
+                                }else if (clues.get(j).equals('W')){
+                                    ((Circle) cl_circ).setFill(Color.WHITE);
+                                }
+                                j++;
+
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+        for(int m = 0; m < MastermindModel.CODE_LENGTH; m++) {
+            if (sol.get(m) > 0) {
+                this.peekBtn.setText("(Un) Peek");
+                Node btn = grid.getChildren().get(m); //new Button();
+                String bg_color = colors[sol.get(m)-1] + ";";
+                String color_it = "-fx-background-color: " + bg_color;
+                btn.setStyle(color_it);
+                btn.setDisable(false);
+            }else{
+                this.peekBtn.setText("Peek");
+                Node btn = grid.getChildren().get(m); //new Button();
+
+                btn.setStyle("-fx-background-color: lightgray");
+            }
+        }
 
     }
 
