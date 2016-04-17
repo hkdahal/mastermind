@@ -1,9 +1,7 @@
 import javafx.application.Application;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.RadioButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -80,15 +78,22 @@ public class MastermindGraphicalVC extends Application implements Observer{
         a_grid.setVgap(gap);
         a_grid.setHgap(gap);
 
-        this.makeSolutionButton(a_grid);
+        //this.makeSolutionButton(a_grid);
 
+        //a_grid.getChildren().add(this.makeSolutionButton());
+
+        a_grid.add(this.makeSolutionButton(), 2,0);
         for ( int r = 1; r < 11; ++r ) {
             a_grid.add(makePegList(), 0, r);
-            for ( int c = 2; c < 6; ++c ) {
+
+            HBox button_box = new HBox(2.5);
+            for ( int c = 0; c < 4; ++c ) {
                 Button btn = new Button();
                 btn = this.makeRandomButton(btn);
-                a_grid.add(btn, c, r );
+                //a_grid.add(btn, c, r );
+                button_box.getChildren().add(btn);
             }
+            a_grid.add(button_box, 2, r);
         }
 
         a_grid.setGridLinesVisible(false);
@@ -98,12 +103,16 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
 
-    private void makeSolutionButton(GridPane theGrid){
-        for (int c = 2; c < 6; c++) {
+    private HBox makeSolutionButton(){
+        HBox button_box = new HBox(2.5);
+        for (int i = 0; i < 4; i++) {
             Button btn = new Button();
+            btn = makeRandomButton(btn);
             btn.setId("Solution Button");
-            theGrid.add(makeRandomButton(btn), c, 0 );
+            button_box.getChildren().add(btn);
+            //theGrid.add(makeRandomButton(btn), c, 0 );
         }
+        return button_box;
     }
 
     private Button makeRandomButton(Button btn){
@@ -162,7 +171,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         resetBtn.setOnAction(event -> newGameEvent());
 
         this.peekBtn = new Button("Peek");
-        peekBtn.setOnAction(event -> peekEvent());
+        peekBtn.setOnAction(event -> this.model.peek());
 
         this.guessBtn = new Button("Guess");
         guessBtn.setDisable(true);
@@ -193,29 +202,25 @@ public class MastermindGraphicalVC extends Application implements Observer{
                         }
                     }
                 }
-
-            }else if (aNode instanceof Button){
-                ((Button) aNode).setText("");
-                aNode.setId("0");
-                aNode.setStyle("-fx-background-color: lightgray");
+            }else if (aNode instanceof HBox){
+                for (Node the_btn: ((HBox) aNode).getChildren()) {
+                    the_btn.setId("0");
+                    the_btn.setStyle("-fx-background-color: lightgray");
+                }
             }
         }
         resetUserInputBar();
     }
 
-    private void peekEvent(){
-        this.model.peek();
-        ArrayList<Integer> sol = this.model.getSolution();
-    }
-
-
     private void guesBtnEvent() {
         this.model.setFullGuessRow(user_gueses);
         this.model.makeGuess();
         if (this.model.getVictoryStatus()){
-            peekEvent();
-            //peekBtn.setDisable(true);
+            //peekEvent();
+            peekBtn.setDisable(true);
             guessBtn.setDisable(true);
+        }else if (this.model.getRemainingGuesses() == 0){
+            peekBtn.setDisable(true);
         }
         resetUserInputBar();
     }
@@ -286,11 +291,13 @@ public class MastermindGraphicalVC extends Application implements Observer{
         int i = 0;
         int j = 0;
         System.out.println("Size of children: " + this.grid.getChildren().size());
+        System.out.println(this.grid.getChildren());
         //for (Node aNode: this.grid.getChildren()){
-        for (int k = 53; k > 3; k--) {
+
+        for (int k = 20; k > 0; k--) {
             Node aNode = this.grid.getChildren().get(k);
-            if (aNode instanceof Button) {
-                if (!aNode.getId().equals("Solution Button")) {
+            if (aNode instanceof HBox){
+                for (Node the_btn: ((HBox) aNode).getChildren()) {
                     int guessed_int = guesses.get(i);
                     //System.out.println(guessed_int);
 
@@ -298,15 +305,11 @@ public class MastermindGraphicalVC extends Application implements Observer{
                         String the_color = this.colors[guessed_int - 1];
                         String color_it = "-fx-background-color: " +
                                 the_color + ";";
-                        ((Button) aNode).setText(" " + k);
-                        aNode.setStyle(color_it);
+                        the_btn.setStyle(color_it);
                     }
                     i++;
                 }
-            }
-
-            if (aNode instanceof VBox){
-                //System.out.println(((VBox) aNode).getChildren());
+            }else if (aNode instanceof VBox){
                 for (Node h_box: ((VBox) aNode).getChildren()){
                     if (h_box instanceof HBox){
                         //System.out.println(((HBox) h_box).getChildren());
@@ -324,27 +327,33 @@ public class MastermindGraphicalVC extends Application implements Observer{
                         }
                     }
                 }
-
             }
         }
 
-        for(int m = 0; m < MastermindModel.CODE_LENGTH; m++) {
-            if (sol.get(m) > 0) {
-                this.peekBtn.setText("(Un) Peek");
-                Node btn = grid.getChildren().get(m); //new Button();
-                String bg_color = colors[sol.get(m)-1] + ";";
-                String color_it = "-fx-background-color: " + bg_color;
-                btn.setStyle(color_it);
-                btn.setDisable(false);
-            }else{
+        HBox the_solution_box;
+
+        if (this.grid.getChildren().get(0) instanceof HBox) {
+            the_solution_box = (HBox) this.grid.getChildren().get(0);
+            if (sol.contains(0)) {
                 this.peekBtn.setText("Peek");
-                Node btn = grid.getChildren().get(m); //new Button();
+                for (Node the_btn: the_solution_box.getChildren()){
+                    the_btn.setStyle("-fx-background-color: lightgray");
+                }
+            }else{
+                this.peekBtn.setText("(Un) Peek");
+                int m = 0;
+                for (Node the_btn: the_solution_box.getChildren()){
+                    the_btn.setStyle("-fx-background-color: lightgray");
+                    String bg_color = colors[sol.get(m)-1] + ";";
+                    String color_it = "-fx-background-color: " + bg_color;
+                    the_btn.setStyle(color_it);
+                    m++;
+                }
 
-                btn.setStyle("-fx-background-color: lightgray");
             }
         }
-
     }
+
 
 
 
