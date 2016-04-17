@@ -67,44 +67,44 @@ public class MastermindGraphicalVC extends Application implements Observer{
         // the User control buttons (new game, peek, guess) at the Right
         border.setRight(this.makeButtonList());
 
-        this.userInputBar = makeUserInputBar();
 
+        // User input bar at the bottom
+        VBox userInput = new VBox();
+        this.userInputBar = makeUserInputBar();
         Text info = new Text("  Click below to input guesses.");
         info.setTextAlignment(TextAlignment.CENTER);
-
-
-        VBox userInput = new VBox();
         userInput.getChildren().addAll(info, userInputBar);
         userInput.setPadding(new Insets(0,10,25,100));
-        //userInput.setPadding(new Insets(0,0,10,0));
-        //userInputBar.getChildren().add(info);
-        // user input bar at the bottom
         border.setBottom(userInput);
 
-        primaryStage.setResizable(false);
+        primaryStage.setResizable(false);   // not resizable
         primaryStage.setScene(new Scene(border));
-        primaryStage.setTitle("Mastermind Game");
+        primaryStage.setTitle("Mastermind Game");   // title
         primaryStage.show();
         this.the_stage = primaryStage;
     }
 
 
+    /**
+     * Makes a grid and returns it
+     * Contains all the pegs and the buttons
+     * @return
+     */
     private GridPane makeNewGridPane(){
         GridPane a_grid = new GridPane();
         int gap = 2;
         a_grid.setVgap(gap);
         a_grid.setHgap(gap);
 
-        //this.makeSolutionButton(a_grid);
+        // making solution buttons first
+        a_grid.add(this.makeSolutionBar(), 2,0);
 
-        //a_grid.getChildren().add(this.makeSolutionButton());
-
-        a_grid.add(this.makeSolutionButton(), 2,0);
-        for ( int r = 1; r < 11; ++r ) {
+        // making MAX_GUESSES HBoxes to hold buttons inside them
+        for ( int r = 1; r < this.model.MAX_GUESSES + 1; ++r ) {
             a_grid.add(makePegList(), 0, r);
 
             HBox button_box = new HBox(2.5);
-            for ( int c = 0; c < 4; ++c ) {
+            for ( int c = 0; c < this.model.CODE_LENGTH; ++c ) {
                 Button btn = new Button();
                 btn = this.makeRandomButton(btn);
                 //a_grid.add(btn, c, r );
@@ -113,14 +113,19 @@ public class MastermindGraphicalVC extends Application implements Observer{
             a_grid.add(button_box, 2, r);
         }
 
-        a_grid.setGridLinesVisible(false);
+        //a_grid.setGridLinesVisible(false);
+
+
+        // spaces around the grid
         a_grid.setPadding(new Insets(40, 40, 40, 50));
 
         return a_grid;
     }
 
 
-    private HBox makeSolutionButton(){
+    // this method makes and returns a solution bar
+    // contains the buttons with solution button properties
+    private HBox makeSolutionBar(){
         HBox button_box = new HBox(2.5);
         for (int i = 0; i < 4; i++) {
             Button btn = new Button();
@@ -132,6 +137,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
         return button_box;
     }
 
+
+    // this method helps update the properties of a general button
     private Button makeRandomButton(Button btn){
         btn.setMinSize( 40, 40 );
         btn.setId("0");
@@ -140,24 +147,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         return btn;
     }
 
-    private void btnClickedEvent(Button btn) {
-
-        int i = Integer.parseInt(btn.getId()) + 1;
-        if (i > 6){
-            i = 1;
-        }
-        String bg_color = colors[i-1] + ";";
-        String color_it = "-fx-background-color: " + bg_color;
-        btn.setStyle(color_it);
-        btn.setId("" + i);
-
-        int index = Integer.parseInt(btn.getAccessibleText());
-        user_gueses.set(index, i);
-        if (!user_gueses.contains(0)){
-            guessBtn.setDisable(false);
-        }
-    }
-
+    // this method creates all the clues-displaying pegs
     private Pane makePegList() {
         Pane pane = new VBox();
 
@@ -174,78 +164,27 @@ public class MastermindGraphicalVC extends Application implements Observer{
         return pane;
     }
 
-    /**
-     * Making a pane that consists the buttons (VBOX)
-     * @return a pane
-     */
-    private Pane makeButtonList(){
-
-        Pane pane = new VBox(10);
-
-        //Insets PADDING = new Insets(0, 0, 50, 0);
-
-        Button resetBtn = new Button("New Game");
-        resetBtn.setOnAction(event -> newGameEvent());
-
-        this.peekBtn = new Button("Peek");
-        peekBtn.setOnAction(event -> this.model.peek());
-
-        this.guessBtn = new Button("Guess");
-        guessBtn.setDisable(true);
-        guessBtn.setOnAction(event -> guesBtnEvent());
-
-        //Button exitBtn = new Button("Exit");
-        //exitBtn.setStyle("-fx-background-color: red");
-        //exitBtn.setOnAction(event -> the_stage.close());
-
-        pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
-        pane.setPadding(new Insets(70, 20, 0, 0));
-        return pane;
-    }
-
-
-    private void newGameEvent(){
-        this.model.reset();
-        user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
-        this.peekBtn.setText("Peek");
-        this.peekBtn.setDisable(false);
-        for (Node aNode: this.grid.getChildren()){
-            if (aNode instanceof VBox){
-                //System.out.println(((VBox) aNode).getChildren());
-                for (Node h_box: ((VBox) aNode).getChildren()){
-                    if (h_box instanceof HBox){
-                        //System.out.println(((HBox) h_box).getChildren());
-                        for (Node cl_circ: ((HBox) h_box).getChildren()){
-                            if (cl_circ instanceof Circle){
-                                ((Circle) cl_circ).setFill(Color.LIGHTGRAY);
-
-                            }
-                        }
-                    }
-                }
-            }else if (aNode instanceof HBox){
-                for (Node the_btn: ((HBox) aNode).getChildren()) {
-                    the_btn.setId("0");
-                    the_btn.setStyle("-fx-background-color: lightgray");
-                }
-            }
+    // this method creates the user input bar from where user guesses
+    // changes the properties of button as user inputs
+    // has Event handling
+    private HBox makeUserInputBar(){
+        HBox the_slide = new HBox(2);
+        for (int i = 0; i < 4; i++) {
+            Button btn = new Button();
+            btn.setMinSize( 40, 40 );
+            btn.setId("0");
+            btn.setAccessibleText("" + i);
+            btn.setStyle("-fx-background-color: lightgray");
+            // btn.setPadding(new Insets(0,10,30,10));
+            btn.setOnAction(event -> btnClickedEvent(btn));
+            the_slide.getChildren().add(btn);
         }
-        resetUserInputBar();
+        the_slide.setPadding(new Insets(5,0,0,0));
+        return the_slide;
     }
 
-    private void guesBtnEvent() {
-        this.model.setFullGuessRow(user_gueses);
-        this.model.makeGuess();
-        if (this.model.getVictoryStatus()){
-            //peekEvent();
-            peekBtn.setDisable(true);
-            guessBtn.setDisable(true);
-        }else if (this.model.getRemainingGuesses() == 0){
-            peekBtn.setDisable(true);
-        }
-        resetUserInputBar();
-    }
-
+    // this method resets the user input bar buttons
+    // updates to default properties (colors and IDs)
     private void resetUserInputBar() {
 
         for (Node btn: this.userInputBar.getChildren()){
@@ -257,19 +196,110 @@ public class MastermindGraphicalVC extends Application implements Observer{
         this.guessBtn.setDisable(true);
     }
 
+    /**
+     * Making a pane that consists the buttons (VBOX)
+     * Events are handled as each button is clicked
+     * @return a pane
+     */
+    private Pane makeButtonList(){
 
+        Pane pane = new VBox(10);
+
+        //Insets PADDING = new Insets(0, 0, 50, 0);
+
+        Button resetBtn = new Button("New Game");
+        resetBtn.setOnAction(event -> newGameEvent());  // Event handled
+
+        this.peekBtn = new Button("Peek");
+        peekBtn.setOnAction(event -> this.model.peek()); // Event handled
+
+        this.guessBtn = new Button("Guess");
+        guessBtn.setDisable(true);    // initially the Guess button is disabled
+        guessBtn.setOnAction(event -> guessBtnEvent());  // Event handled
+
+        // in case the Exit button needed?
+        //Button exitBtn = new Button("Exit");
+        //exitBtn.setStyle("-fx-background-color: red");
+        //exitBtn.setOnAction(event -> the_stage.close());
+
+        // adding all the buttons to the pane
+        pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
+        pane.setPadding(new Insets(70, 20, 0, 0));
+        return pane;
+    }
+
+    // this event handling when a button is clicked
+    // mainly this comes up for the user input bar
+    private void btnClickedEvent(Button btn) {
+
+        int i = Integer.parseInt(btn.getId()) + 1;
+        if (i > 6){
+            i = 1;
+        }
+        int col_index = i-1;
+        colorTheButton(col_index, btn);
+        /*String bg_color = colors[i-1] + ";";
+        String color_it = "-fx-background-color: " + bg_color;
+        btn.setStyle(color_it);*/
+        btn.setId("" + i);
+
+        int index = Integer.parseInt(btn.getAccessibleText());
+        user_gueses.set(index, i);
+        if (!user_gueses.contains(0)){
+            guessBtn.setDisable(false);
+        }
+    }
+
+
+    /**
+     * Handles things that happen when a "New Game" is clicked
+     * First, resets the model.
+     * Then, resets the user_guesses
+     * updates the Peek Button text and enables that button.
+     * Then, resets the user input
+     *
+     */
+    private void newGameEvent(){
+        this.model.reset();
+        user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
+        this.peekBtn.setText("Peek");
+        this.peekBtn.setDisable(false);
+        resetUserInputBar();
+    }
+
+    /**
+     * Handles the events when "Guess" button is clicked.
+     * Feeds the model's setFullGuessRow with the user's guesses.
+     * Makes the guess with model's makeGuess
+     * If the user wins or loses, "Peek" and "Guess" buttons are disabled,
+     * and resets the user input bar.
+     */
+    private void guessBtnEvent() {
+        this.model.setFullGuessRow(user_gueses);
+        this.model.makeGuess();
+        if (this.model.getVictoryStatus() ||
+                this.model.getRemainingGuesses() == 0){
+            peekBtn.setDisable(true);
+            guessBtn.setDisable(true);
+        }
+        resetUserInputBar();
+    }
+
+    
     @Override
     public void update(Observable o, Object arg) {
         assert o == this.model: "Unexpected subject of observation";
         displayGame();
     }
 
+    // displays the game calling display helper methods
     private void displayGame() {
         displayBoard();
         displayMessage();
 
     }
 
+    // update the display message
     private void displayMessage() {
         if (this.model.getVictoryStatus()){
             statusMessage.setText("You cracked the code!!");
@@ -281,66 +311,52 @@ public class MastermindGraphicalVC extends Application implements Observer{
         }
     }
 
-    private HBox makeUserInputBar(){
-        HBox the_slide = new HBox(2);
-        for (int i = 0; i < 4; i++) {
-            Button btn = new Button();
-            btn.setMinSize( 40, 40 );
-            btn.setId("0");
-            btn.setAccessibleText("" + i);
-            btn.setStyle("-fx-background-color: lightgray");
-           // btn.setPadding(new Insets(0,10,30,10));
-            btn.setOnAction(event -> btnClickedEvent(btn));
-            the_slide.getChildren().add(btn);
-        }
-        the_slide.setPadding(new Insets(5,0,0,0));
-        return the_slide;
-    }
-
-
+    /**
+     * This helper method updates the display of the board.
+     * First, retrieves the data from the model: Solution, ClueData, GuessData.
+     * Then, updates the board by catching each child and updating its
+     * properties as needed.
+     * Inside the HBox, it changes the colors of the buttons as per the
+     * guesses data. Inside the VBox, where the pegs (circles) are, the
+     * colors of the circles are changed.
+     * A little logic is tweaked for the solution display by looking at the
+     * contents of the retrieved solution data.
+     */
     private void displayBoard() {
         ArrayList<Integer> sol = this.model.getSolution();
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
 
-        /*System.out.println("Solution: " + sol);
-        System.out.println("User_Guesses: " + user_gueses);
-        System.out.println("Clues: " + clues);
-        System.out.println("GuessesData: " + guesses);*/
-
 
         int i = 0;
         int j = 0;
-        //System.out.println("Size: " + this.grid.getChildren().size());
-        //System.out.println(this.grid.getChildren());
-        //for (Node aNode: this.grid.getChildren()){
 
         for (int k = 20; k > 0; k--) {
             Node aNode = this.grid.getChildren().get(k);
             if (aNode instanceof HBox){
                 for (Node the_btn: ((HBox) aNode).getChildren()) {
                     int guessed_int = guesses.get(i);
-                    //System.out.println(guessed_int);
 
                     if (guessed_int > 0) {
-                        String the_color = this.colors[guessed_int - 1];
-                        String color_it = "-fx-background-color: " +
-                                the_color + ";";
-                        the_btn.setStyle(color_it);
+                        int col_index = guessed_int - 1;
+                        colorTheButton(col_index, (Button)the_btn);
+                    }else{
+                        the_btn.setId("0");
+                        the_btn.setStyle("-fx-background-color: lightgray");
                     }
                     i++;
                 }
             }else if (aNode instanceof VBox){
                 for (Node h_box: ((VBox) aNode).getChildren()){
                     if (h_box instanceof HBox){
-                        //System.out.println(((HBox) h_box).getChildren());
                         for (Node cl_circ: ((HBox) h_box).getChildren()){
                             if (cl_circ instanceof Circle){
-                                //r_bt.setStyle("-fx-background-color: aqua");
                                 if (clues.get(j).equals('B')){
                                     ((Circle) cl_circ).setFill(Color.BLACK);
                                 }else if (clues.get(j).equals('W')){
                                     ((Circle) cl_circ).setFill(Color.WHITE);
+                                }else{
+                                    ((Circle) cl_circ).setFill(Color.LIGHTGRAY);
                                 }
                                 j++;
 
@@ -364,10 +380,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
                 this.peekBtn.setText("(Un) Peek");
                 int m = 0;
                 for (Node the_btn: the_solution_box.getChildren()){
-                    the_btn.setStyle("-fx-background-color: lightgray");
-                    String bg_color = colors[sol.get(m)-1] + ";";
-                    String color_it = "-fx-background-color: " + bg_color;
-                    the_btn.setStyle(color_it);
+                    int col_index = sol.get(m) - 1;
+                    colorTheButton(col_index, (Button)the_btn);
                     m++;
                 }
 
@@ -376,7 +390,19 @@ public class MastermindGraphicalVC extends Application implements Observer{
     }
 
 
+    /**
+     * Given the color index and a button, this helper method colors that
+     * button.
+     * @param col_index
+     * @param the_btn
+     */
+    private void colorTheButton(int col_index, Button the_btn){
+        String the_color = this.colors[col_index];
+        String color_it = "-fx-background-color: " +
+                the_color + ";";
+        the_btn.setStyle(color_it);
 
+    }
 
     /**
      * The main method used to play a game.
