@@ -88,7 +88,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
     /**
      * Makes a grid and returns it
      * Contains all the pegs and the buttons
-     * @return
+     * @return a grid with everything filled in
      */
     private GridPane makeNewGridPane(){
         GridPane a_grid = new GridPane();
@@ -100,11 +100,11 @@ public class MastermindGraphicalVC extends Application implements Observer{
         a_grid.add(this.makeSolutionBar(), 2,0);
 
         // making MAX_GUESSES HBoxes to hold buttons inside them
-        for ( int r = 1; r < this.model.MAX_GUESSES + 1; ++r ) {
+        for ( int r = 1; r < MastermindModel.MAX_GUESSES + 1; ++r ) {
             a_grid.add(makePegList(), 0, r);
 
             HBox button_box = new HBox(2.5);
-            for ( int c = 0; c < this.model.CODE_LENGTH; ++c ) {
+            for ( int c = 0; c < MastermindModel.CODE_LENGTH; ++c ) {
                 Button btn = new Button();
                 btn = this.makeRandomButton(btn);
                 //a_grid.add(btn, c, r );
@@ -112,10 +112,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
             }
             a_grid.add(button_box, 2, r);
         }
-
-        //a_grid.setGridLinesVisible(false);
-
-
         // spaces around the grid
         a_grid.setPadding(new Insets(40, 40, 40, 50));
 
@@ -130,7 +126,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         for (int i = 0; i < 4; i++) {
             Button btn = new Button();
             btn = makeRandomButton(btn);
-            btn.setId("Solution Button");
             button_box.getChildren().add(btn);
             //theGrid.add(makeRandomButton(btn), c, 0 );
         }
@@ -187,12 +182,12 @@ public class MastermindGraphicalVC extends Application implements Observer{
     // updates to default properties (colors and IDs)
     private void resetUserInputBar() {
 
-        for (Node btn: this.userInputBar.getChildren()){
+        this.userInputBar.getChildren().forEach(btn -> {
             if (btn instanceof Button){
                 btn.setId("0");
                 btn.setStyle("-fx-background-color: lightgray");
             }
-        }
+        });
         this.guessBtn.setDisable(true);
     }
 
@@ -238,9 +233,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         }
         int col_index = i-1;
         colorTheButton(col_index, btn);
-        /*String bg_color = colors[i-1] + ";";
-        String color_it = "-fx-background-color: " + bg_color;
-        btn.setStyle(color_it);*/
         btn.setId("" + i);
 
         int index = Integer.parseInt(btn.getAccessibleText());
@@ -393,8 +385,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
     /**
      * Given the color index and a button, this helper method colors that
      * button.
-     * @param col_index
-     * @param the_btn
+     * @param col_index - color index for colors array
+     * @param the_btn - the button to be updated
      */
     private void colorTheButton(int col_index, Button the_btn){
         String the_color = this.colors[col_index];
