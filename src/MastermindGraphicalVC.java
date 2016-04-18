@@ -164,7 +164,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
     // has Event handling
     private HBox makeUserInputBar(){
         HBox the_slide = new HBox(2);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < MastermindModel.CODE_LENGTH; i++) {
             Button btn = new Button();
             btn.setMinSize( 40, 40 );
             btn.setId("0");
@@ -182,12 +182,14 @@ public class MastermindGraphicalVC extends Application implements Observer{
     // updates to default properties (colors and IDs)
     private void resetUserInputBar() {
 
-        this.userInputBar.getChildren().forEach(btn -> {
-            if (btn instanceof Button){
-                btn.setId("0");
-                btn.setStyle("-fx-background-color: lightgray");
-            }
-        });
+        int i = 0;
+        for (Node btn: userInputBar.getChildren()){
+            btn.setAccessibleText("" + i);
+            i++;
+            btn.setStyle("-fx-background-color: lightgray");
+            btn.setId("0");
+            user_gueses = new ArrayList<>(Arrays.asList(0,0,0,0));
+        }
         this.guessBtn.setDisable(true);
     }
 
@@ -239,6 +241,8 @@ public class MastermindGraphicalVC extends Application implements Observer{
         user_gueses.set(index, i);
         if (!user_gueses.contains(0)){
             guessBtn.setDisable(false);
+        }else{
+            guessBtn.setDisable(true);
         }
     }
 
