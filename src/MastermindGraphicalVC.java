@@ -315,9 +315,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         ArrayList<Integer> sol = this.model.getSolution();
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
-        System.out.println(sol);
-        System.out.println(clues);
-        System.out.println(guesses);
 
 
         int i = 0; // guesses index
