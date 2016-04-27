@@ -28,11 +28,10 @@ public class MastermindGraphicalVC extends Application implements Observer{
     private GridPane grid;          // the grid (the game)
     private Button peekBtn;         // the peek button
     private Button guessBtn;        // the guess button
-    private Stage the_stage;
 
     // an array of colors
-    private String[] colors = {"black", "white", "blue", "yellow", "red",
-            "green"};
+    private String[] colors =
+            {"black", "white", "blue", "yellow", "red", "green"};
 
     // initial guesses of user
     private ArrayList<Integer> user_gueses = new ArrayList<>(Arrays.asList(0,
@@ -81,7 +80,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         primaryStage.setScene(new Scene(border));
         primaryStage.setTitle("Mastermind Game");   // title
         primaryStage.show();
-        this.the_stage = primaryStage;
     }
 
 
@@ -107,7 +105,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
             for ( int c = 0; c < MastermindModel.CODE_LENGTH; ++c ) {
                 Button btn = new Button();
                 btn = this.makeRandomButton(btn);
-                //a_grid.add(btn, c, r );
                 button_box.getChildren().add(btn);
             }
             a_grid.add(button_box, 2, r);
@@ -214,10 +211,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
         guessBtn.setDisable(true);    // initially the Guess button is disabled
         guessBtn.setOnAction(event -> guessBtnEvent());  // Event handled
 
-        // in case the Exit button needed?
-        //Button exitBtn = new Button("Exit");
-        //exitBtn.setStyle("-fx-background-color: red");
-        //exitBtn.setOnAction(event -> the_stage.close());
 
         // adding all the buttons to the pane
         pane.getChildren().addAll(resetBtn, peekBtn, guessBtn);
@@ -281,7 +274,7 @@ public class MastermindGraphicalVC extends Application implements Observer{
         resetUserInputBar();
     }
 
-    
+
     @Override
     public void update(Observable o, Object arg) {
         assert o == this.model: "Unexpected subject of observation";
@@ -322,10 +315,13 @@ public class MastermindGraphicalVC extends Application implements Observer{
         ArrayList<Integer> sol = this.model.getSolution();
         ArrayList<Character> clues = this.model.getClueData();
         ArrayList<Integer> guesses = this.model.getGuessData();
+        System.out.println(sol);
+        System.out.println(clues);
+        System.out.println(guesses);
 
 
-        int i = 0;
-        int j = 0;
+        int i = 0; // guesses index
+        int j = 0; // clues index
 
         for (int k = 20; k > 0; k--) {
             Node aNode = this.grid.getChildren().get(k);
@@ -380,7 +376,6 @@ public class MastermindGraphicalVC extends Application implements Observer{
                     colorTheButton(col_index, (Button)the_btn);
                     m++;
                 }
-
             }
         }
     }
